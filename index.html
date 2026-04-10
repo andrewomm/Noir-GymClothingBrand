@@ -1,0 +1,846 @@
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ShoppingBag,
+  Search,
+  Menu,
+  X,
+  Star,
+  Truck,
+  ShieldCheck,
+  RotateCcw,
+  Minus,
+  Plus,
+  Heart,
+  ChevronRight,
+  Check,
+  ArrowRight,
+} from "lucide-react";
+
+const PRODUCTS = [
+  {
+    id: 1,
+    name: "Essential Oversized Tee",
+    category: "Tops",
+    price: 48,
+    oldPrice: 60,
+    sizes: ["S", "M", "L", "XL"],
+    colors: ["Black", "White", "Stone"],
+    image:
+      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80",
+    tag: "Best Seller",
+    rating: 4.8,
+  },
+  {
+    id: 2,
+    name: "Signature Hoodie",
+    category: "Outerwear",
+    price: 96,
+    oldPrice: 120,
+    sizes: ["S", "M", "L", "XL"],
+    colors: ["Black", "Ash", "Forest"],
+    image:
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=1200&q=80",
+    tag: "New Drop",
+    rating: 4.9,
+  },
+  {
+    id: 3,
+    name: "Relaxed Cargo Pant",
+    category: "Bottoms",
+    price: 88,
+    oldPrice: 110,
+    sizes: ["S", "M", "L", "XL"],
+    colors: ["Olive", "Black", "Sand"],
+    image:
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
+    tag: "Popular",
+    rating: 4.7,
+  },
+  {
+    id: 4,
+    name: "Studio Zip Jacket",
+    category: "Outerwear",
+    price: 118,
+    oldPrice: 145,
+    sizes: ["S", "M", "L", "XL"],
+    colors: ["Charcoal", "Cream"],
+    image:
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80",
+    tag: "Limited",
+    rating: 4.9,
+  },
+  {
+    id: 5,
+    name: "Everyday Rib Tank",
+    category: "Tops",
+    price: 36,
+    oldPrice: 45,
+    sizes: ["XS", "S", "M", "L"],
+    colors: ["White", "Black", "Clay"],
+    image:
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80",
+    tag: "Core",
+    rating: 4.6,
+  },
+  {
+    id: 6,
+    name: "Classic Denim",
+    category: "Bottoms",
+    price: 92,
+    oldPrice: 115,
+    sizes: ["28", "30", "32", "34"],
+    colors: ["Indigo", "Washed Black"],
+    image:
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1200&q=80",
+    tag: "Best Seller",
+    rating: 4.8,
+  },
+  {
+    id: 7,
+    name: "Minimal Cap",
+    category: "Accessories",
+    price: 34,
+    oldPrice: 42,
+    sizes: ["One Size"],
+    colors: ["Black", "Stone", "Navy"],
+    image:
+      "https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=1200&q=80",
+    tag: "Accessory",
+    rating: 4.5,
+  },
+  {
+    id: 8,
+    name: "Heavyweight Crewneck",
+    category: "Tops",
+    price: 84,
+    oldPrice: 102,
+    sizes: ["S", "M", "L", "XL"],
+    colors: ["Grey", "Black", "Mocha"],
+    image:
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=80",
+    tag: "Staff Pick",
+    rating: 4.7,
+  },
+];
+
+const CATEGORIES = ["All", "Tops", "Outerwear", "Bottoms", "Accessories"];
+const PROMO_CODES = { NOIR10: 0.1, FIRST15: 0.15 };
+
+function formatCAD(value) {
+  return new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function Button({ children, className = "", variant = "default", asChild = false, ...props }) {
+  const base =
+    "inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-white/30 disabled:cursor-not-allowed disabled:opacity-50";
+  const styles =
+    variant === "outline"
+      ? "border border-white/20 bg-transparent text-white hover:bg-white hover:text-black"
+      : "bg-white text-black hover:bg-white/90";
+
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, {
+      className: cn(base, styles, className, children.props.className),
+      ...props,
+    });
+  }
+
+  return (
+    <button className={cn(base, styles, className)} {...props}>
+      {children}
+    </button>
+  );
+}
+
+function Card({ children, className = "" }) {
+  return <div className={cn("rounded-[1.5rem] border border-white/10 bg-white/5", className)}>{children}</div>;
+}
+
+function CardContent({ children, className = "" }) {
+  return <div className={className}>{children}</div>;
+}
+
+function Input(props) {
+  return (
+    <input
+      {...props}
+      className={cn(
+        "h-11 w-full rounded-full border border-white/10 bg-neutral-950 px-4 text-sm text-white placeholder:text-white/35 outline-none ring-0 focus:border-white/30",
+        props.className
+      )}
+    />
+  );
+}
+
+function Badge({ children, className = "" }) {
+  return <div className={cn("inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold", className)}>{children}</div>;
+}
+
+export default function ClothingBrandWebsite() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("All");
+  const [cart, setCart] = useState([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0]);
+  const [selectedSize, setSelectedSize] = useState(PRODUCTS[0].sizes[0]);
+  const [selectedColor, setSelectedColor] = useState(PRODUCTS[0].colors[0]);
+  const [favorites, setFavorites] = useState([]);
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState("");
+  const [promoMessage, setPromoMessage] = useState("");
+  const [checkoutStep, setCheckoutStep] = useState(1);
+  const [email, setEmail] = useState("");
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedCart = window.localStorage.getItem("noir-cart");
+      const savedFavorites = window.localStorage.getItem("noir-favorites");
+      if (savedCart) setCart(JSON.parse(savedCart));
+      if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("noir-cart", JSON.stringify(cart));
+    } catch {}
+  }, [cart]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("noir-favorites", JSON.stringify(favorites));
+    } catch {}
+  }, [favorites]);
+
+  const filteredProducts = useMemo(() => {
+    return PRODUCTS.filter((product) => {
+      const matchesCategory = category === "All" || product.category === category;
+      const q = query.toLowerCase();
+      const matchesQuery = product.name.toLowerCase().includes(q) || product.category.toLowerCase().includes(q);
+      return matchesCategory && matchesQuery;
+    });
+  }, [query, category]);
+
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const discountRate = appliedPromo ? PROMO_CODES[appliedPromo] || 0 : 0;
+  const discount = subtotal * discountRate;
+  const discountedSubtotal = subtotal - discount;
+  const shipping = discountedSubtotal >= 150 || discountedSubtotal === 0 ? 0 : 12;
+  const total = discountedSubtotal + shipping;
+
+  function addToCart(product, size, color) {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id && item.size === size && item.color === color);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id && item.size === size && item.color === color
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          size,
+          color,
+          quantity: 1,
+        },
+      ];
+    });
+    setCartOpen(true);
+  }
+
+  function updateQuantity(target, delta) {
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item.id === target.id && item.size === target.size && item.color === target.color
+            ? { ...item, quantity: item.quantity + delta }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  }
+
+  function toggleFavorite(id) {
+    setFavorites((prev) => (prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]));
+  }
+
+  function openProduct(product) {
+    setSelectedProduct(product);
+    setSelectedSize(product.sizes[0]);
+    setSelectedColor(product.colors[0]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function applyPromo() {
+    const normalized = promoCode.trim().toUpperCase();
+    if (PROMO_CODES[normalized]) {
+      setAppliedPromo(normalized);
+      setPromoMessage(`${normalized} applied successfully.`);
+    } else {
+      setAppliedPromo("");
+      setPromoMessage("Invalid promo code.");
+    }
+  }
+
+  function proceedCheckout() {
+    if (cart.length === 0) return;
+    setCheckoutStep((prev) => Math.min(prev + 1, 3));
+  }
+
+  function resetCheckout() {
+    setCheckoutStep(1);
+    setCart([]);
+    setAppliedPromo("");
+    setPromoCode("");
+    setPromoMessage("");
+  }
+
+  return (
+    <div className="min-h-screen bg-neutral-950 text-white">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-neutral-950/90 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <button className="lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+              <Menu className="h-6 w-6" />
+            </button>
+            <a href="#home" className="text-2xl font-black tracking-[0.3em]">
+              NOIR
+            </a>
+          </div>
+
+          <nav className="hidden items-center gap-8 lg:flex">
+            <a href="#new" className="text-sm text-white/80 transition hover:text-white">New Drop</a>
+            <a href="#shop" className="text-sm text-white/80 transition hover:text-white">Shop</a>
+            <a href="#story" className="text-sm text-white/80 transition hover:text-white">Brand Story</a>
+            <a href="#reviews" className="text-sm text-white/80 transition hover:text-white">Reviews</a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center rounded-full border border-white/10 bg-white/5 px-3 py-2 md:flex">
+              <Search className="mr-2 h-4 w-4 text-white/60" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search products"
+                className="w-44 bg-transparent text-sm text-white placeholder:text-white/40 outline-none"
+              />
+            </div>
+            <Button variant="outline" onClick={() => setCartOpen(true)}>
+              <ShoppingBag className="mr-2 h-4 w-4" /> Cart ({cartCount})
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 lg:hidden">
+          <div className="absolute left-0 top-0 h-full w-72 border-r border-white/10 bg-neutral-950 p-6">
+            <div className="mb-8 flex items-center justify-between">
+              <div className="text-xl font-black tracking-[0.3em]">NOIR</div>
+              <button onClick={() => setMobileOpen(false)} aria-label="Close menu">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="mb-4 flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-2">
+              <Search className="mr-2 h-4 w-4 text-white/60" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search"
+                className="w-full bg-transparent text-sm text-white placeholder:text-white/40 outline-none"
+              />
+            </div>
+            <div className="space-y-4 text-sm text-white/80">
+              <a href="#new" onClick={() => setMobileOpen(false)} className="block">New Drop</a>
+              <a href="#shop" onClick={() => setMobileOpen(false)} className="block">Shop</a>
+              <a href="#story" onClick={() => setMobileOpen(false)} className="block">Brand Story</a>
+              <a href="#reviews" onClick={() => setMobileOpen(false)} className="block">Reviews</a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main id="home">
+        <section className="relative overflow-hidden border-b border-white/10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.08),transparent_25%)]" />
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
+            <div className="relative z-10 flex flex-col justify-center">
+              <Badge className="mb-4 w-fit bg-white text-black">Spring / Summer 2026</Badge>
+              <h1 className="max-w-xl text-5xl font-black leading-none tracking-tight sm:text-6xl lg:text-7xl">
+                Build the look. Own the room.
+              </h1>
+              <p className="mt-5 max-w-lg text-base leading-7 text-white/70 sm:text-lg">
+                Premium essentials for everyday confidence. Clean silhouettes, elevated basics, and statement pieces designed to convert attention into identity.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button asChild>
+                  <a href="#shop">Shop Collection</a>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href="#story">Our Story</a>
+                </Button>
+              </div>
+              <div className="mt-10 grid max-w-md grid-cols-3 gap-4 text-sm">
+                <div><div className="font-bold">Free Shipping</div><div className="text-white/60">Orders over $150</div></div>
+                <div><div className="font-bold">Easy Returns</div><div className="text-white/60">14-day returns</div></div>
+                <div><div className="font-bold">Premium Quality</div><div className="text-white/60">Built to last</div></div>
+              </div>
+            </div>
+
+            <div className="relative z-10">
+              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-3 shadow-2xl">
+                <img
+                  src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=1400&q=80"
+                  alt="Fashion hero"
+                  className="h-[500px] w-full rounded-[1.5rem] object-cover lg:h-[640px]"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="new" className="border-b border-white/10 bg-neutral-900/40">
+          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+            <div className="grid gap-4 md:grid-cols-3">
+              {[
+                { icon: Truck, title: "Fast delivery", text: "Dispatched within 24 hours on business days." },
+                { icon: ShieldCheck, title: "Premium materials", text: "Heavyweight cottons and durable construction." },
+                { icon: RotateCcw, title: "Simple returns", text: "Changed your mind? Returns are quick and easy." },
+              ].map((item) => (
+                <Card key={item.title} className="shadow-lg">
+                  <CardContent className="flex items-start gap-4 p-6">
+                    <div className="rounded-2xl bg-white p-3 text-black">
+                      <item.icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">{item.title}</div>
+                      <div className="mt-1 text-sm leading-6 text-white/65">{item.text}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-white/10">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+            <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-3">
+              <img src={selectedProduct.image} alt={selectedProduct.name} className="h-[500px] w-full rounded-[1.5rem] object-cover" />
+            </div>
+            <div className="flex flex-col justify-center">
+              <Badge className="mb-4 w-fit bg-white/10 text-white">Featured Product</Badge>
+              <h2 className="text-4xl font-black tracking-tight sm:text-5xl">{selectedProduct.name}</h2>
+              <div className="mt-3 flex items-center gap-3 text-sm text-white/70">
+                <div className="flex items-center gap-1 text-white"><Star className="h-4 w-4 fill-current" /> {selectedProduct.rating}</div>
+                <span>•</span>
+                <span>{selectedProduct.category}</span>
+                <span>•</span>
+                <span className="text-white">{selectedProduct.tag}</span>
+              </div>
+              <div className="mt-5 flex items-center gap-3">
+                <span className="text-3xl font-bold">{formatCAD(selectedProduct.price)}</span>
+                <span className="text-lg text-white/40 line-through">{formatCAD(selectedProduct.oldPrice)}</span>
+              </div>
+              <p className="mt-5 max-w-xl text-white/70">
+                Designed for comfort, built for repeat wear, and cut to make everyday outfits look intentional. This is your go-to piece when you want minimal effort with maximum impact.
+              </p>
+
+              <div className="mt-7">
+                <div className="mb-3 text-sm font-medium text-white/80">Select size</div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProduct.sizes.map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={cn(
+                        "rounded-full border px-4 py-2 text-sm transition",
+                        selectedSize === size ? "border-white bg-white text-black" : "border-white/15 bg-white/5 text-white hover:border-white/30"
+                      )}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between gap-3">
+                <div className="text-sm font-medium text-white/80">Select color</div>
+                <button onClick={() => setShowSizeGuide(true)} className="text-sm text-white/60 underline underline-offset-4 hover:text-white">
+                  Size guide
+                </button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedProduct.colors.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={cn(
+                      "rounded-full border px-4 py-2 text-sm transition",
+                      selectedColor === color ? "border-white bg-white text-black" : "border-white/15 bg-white/5 text-white hover:border-white/30"
+                    )}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button onClick={() => addToCart(selectedProduct, selectedSize, selectedColor)}>Add to Cart</Button>
+                <Button variant="outline" onClick={() => toggleFavorite(selectedProduct.id)}>
+                  <Heart className={cn("mr-2 h-4 w-4", favorites.includes(selectedProduct.id) && "fill-current")} />
+                  {favorites.includes(selectedProduct.id) ? "Saved" : "Save"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-white/10 bg-neutral-900/30">
+          <div className="mx-auto grid max-w-7xl gap-4 px-4 py-6 text-sm text-white/70 sm:px-6 lg:grid-cols-4 lg:px-8">
+            <div className="flex items-center gap-2"><Check className="h-4 w-4" /> Free shipping over $150</div>
+            <div className="flex items-center gap-2"><Check className="h-4 w-4" /> Secure checkout</div>
+            <div className="flex items-center gap-2"><Check className="h-4 w-4" /> Premium heavyweight fabrics</div>
+            <div className="flex items-center gap-2"><Check className="h-4 w-4" /> Easy 14-day returns</div>
+          </div>
+        </section>
+
+        <section id="shop" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h3 className="text-3xl font-black tracking-tight sm:text-4xl">Shop the collection</h3>
+              <p className="mt-2 text-white/65">A premium storefront with filtering, search, favorites, and a working cart.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setCategory(item)}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-sm transition",
+                    category === item ? "border-white bg-white text-black" : "border-white/15 bg-white/5 text-white hover:border-white/30"
+                  )}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {filteredProducts.map((product) => (
+              <Card key={product.id} className="group overflow-hidden text-white shadow-lg transition hover:-translate-y-1 hover:bg-white/[0.07]">
+                <div className="relative">
+                  <img src={product.image} alt={product.name} className="h-80 w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
+                  <Badge className="absolute left-4 top-4 bg-white text-black">{product.tag}</Badge>
+                  <button
+                    onClick={() => toggleFavorite(product.id)}
+                    className="absolute right-4 top-4 rounded-full bg-black/50 p-2 backdrop-blur transition hover:bg-black/70"
+                    aria-label="Save product"
+                  >
+                    <Heart className={cn("h-4 w-4 text-white", favorites.includes(product.id) && "fill-current")} />
+                  </button>
+                </div>
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold">{product.name}</div>
+                      <div className="mt-1 text-sm text-white/55">{product.category}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">{formatCAD(product.price)}</div>
+                      <div className="text-xs text-white/35 line-through">{formatCAD(product.oldPrice)}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-1 text-sm text-white/75">
+                    <Star className="h-4 w-4 fill-current" /> {product.rating}
+                  </div>
+                  <div className="mt-5 flex gap-2">
+                    <Button className="flex-1" onClick={() => openProduct(product)}>
+                      View <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" className="flex-1" onClick={() => addToCart(product, product.sizes[0], product.colors[0])}>
+                      Add
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section id="story" className="border-y border-white/10 bg-white/[0.03]">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8">
+            <div>
+              <p className="mb-3 text-sm uppercase tracking-[0.3em] text-white/45">Brand Story</p>
+              <h3 className="text-4xl font-black tracking-tight sm:text-5xl">Created for everyday confidence.</h3>
+              <p className="mt-5 max-w-xl text-base leading-7 text-white/70">
+                NOIR is a modern clothing label focused on sharp basics, clean proportions, and pieces that feel elevated without trying too hard. The goal is simple: make getting dressed easier while helping you look more intentional every day.
+              </p>
+              <p className="mt-4 max-w-xl text-base leading-7 text-white/70">
+                This storefront is built to feel real with strong product presentation, clear calls to action, and a polished shopping flow that works on desktop and mobile.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                ["Premium feel", "Dark, modern visuals with a luxury streetwear edge."],
+                ["Built to convert", "Clear CTAs, focused hierarchy, friction-free cart flow."],
+                ["Mobile-first", "Responsive layout with thumb-friendly actions."],
+                ["Expandable", "Ready to connect to Stripe, Shopify, or a CMS later."],
+              ].map(([title, text]) => (
+                <Card key={title} className="bg-neutral-950 text-white">
+                  <CardContent className="p-6">
+                    <div className="text-lg font-semibold">{title}</div>
+                    <div className="mt-2 text-sm leading-6 text-white/65">{text}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="reviews" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mb-8 flex items-end justify-between gap-6">
+            <div>
+              <h3 className="text-3xl font-black tracking-tight sm:text-4xl">Customer love</h3>
+              <p className="mt-2 text-white/65">Social proof that helps push visitors toward checkout.</p>
+            </div>
+            <div className="hidden text-sm text-white/55 md:block">Rated 4.8/5 across core pieces</div>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            {[
+              { name: "Ava", quote: "The fit is unreal. It looks premium the moment you put it on." },
+              { name: "Jason", quote: "Finally a clothing site that feels clean, fast, and easy to shop." },
+              { name: "Mia", quote: "The hoodie quality surprised me. Heavy, soft, and actually worth it." },
+            ].map((review) => (
+              <Card key={review.name} className="text-white">
+                <CardContent className="p-6">
+                  <div className="mb-4 flex gap-1 text-white">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-current" />
+                    ))}
+                  </div>
+                  <p className="text-white/80">“{review.quote}”</p>
+                  <div className="mt-5 text-sm font-medium text-white/60">— {review.name}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-t border-white/10 bg-white/[0.03]">
+          <div className="mx-auto max-w-7xl px-4 pt-14 sm:px-6 lg:px-8">
+            <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-r from-white/10 to-white/5 p-8 sm:p-10">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.3em] text-white/45">Limited release</p>
+                  <h3 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">The Midnight Capsule is live.</h3>
+                  <p className="mt-3 max-w-2xl text-white/65">Short-run essentials with elevated fabrics and a darker palette. Built for urgency, designed to feel exclusive.</p>
+                </div>
+                <Button>
+                  Shop Drop <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 py-14 text-center sm:px-6 lg:flex-row lg:px-8 lg:text-left">
+            <div>
+              <h3 className="text-3xl font-black tracking-tight">Get 10% off your first order</h3>
+              <p className="mt-2 text-white/65">Join the list for drops, restocks, and early access.</p>
+            </div>
+            <div className="flex w-full max-w-md gap-3">
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" />
+              <Button>Join</Button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-white/10">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-4 lg:px-8">
+          <div className="md:col-span-2">
+            <div className="text-2xl font-black tracking-[0.3em]">NOIR</div>
+            <p className="mt-4 max-w-md text-sm leading-6 text-white/60">
+              A modern clothing brand storefront concept with a functional cart, responsive layout, product filtering, and polished premium styling.
+            </p>
+          </div>
+          <div>
+            <div className="font-semibold">Shop</div>
+            <div className="mt-4 space-y-3 text-sm text-white/60">
+              <div>New Arrivals</div>
+              <div>Tops</div>
+              <div>Bottoms</div>
+              <div>Accessories</div>
+            </div>
+          </div>
+          <div>
+            <div className="font-semibold">Help</div>
+            <div className="mt-4 space-y-3 text-sm text-white/60">
+              <div>Shipping</div>
+              <div>Returns</div>
+              <div>Contact</div>
+              <div>Size Guide</div>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {showSizeGuide && (
+        <div className="fixed inset-0 z-50 bg-black/70 p-4">
+          <div className="mx-auto mt-16 max-w-lg rounded-[2rem] border border-white/10 bg-neutral-950 p-6 text-white shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h4 className="text-xl font-bold">Size Guide</h4>
+              <button onClick={() => setShowSizeGuide(false)} aria-label="Close size guide">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-sm text-white/75">
+              <div className="font-semibold text-white">Size</div>
+              <div className="font-semibold text-white">Chest</div>
+              <div className="font-semibold text-white">Waist</div>
+              <div>S</div><div>36–38 in</div><div>30–32 in</div>
+              <div>M</div><div>38–40 in</div><div>32–34 in</div>
+              <div>L</div><div>40–42 in</div><div>34–36 in</div>
+              <div>XL</div><div>42–45 in</div><div>36–39 in</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cartOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70">
+          <div className="absolute right-0 top-0 h-full w-full max-w-md border-l border-white/10 bg-neutral-950 p-5 shadow-2xl">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h4 className="text-xl font-bold">{checkoutStep === 3 ? "Order Confirmed" : "Your Cart"}</h4>
+                <p className="text-sm text-white/55">{checkoutStep === 3 ? "Thanks for shopping with NOIR" : `${cartCount} item${cartCount === 1 ? "" : "s"}`}</p>
+              </div>
+              <button onClick={() => setCartOpen(false)} aria-label="Close cart">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {checkoutStep < 3 && (
+              <div className="mb-5 flex items-center gap-2 text-xs text-white/55">
+                {[1, 2, 3].map((step) => (
+                  <React.Fragment key={step}>
+                    <div className={cn(
+                      "flex h-7 w-7 items-center justify-center rounded-full border",
+                      checkoutStep >= step ? "border-white bg-white text-black" : "border-white/15 text-white"
+                    )}>
+                      {step}
+                    </div>
+                    {step < 3 && <div className={cn("h-px flex-1", checkoutStep > step ? "bg-white" : "bg-white/15")} />}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-4 overflow-y-auto pr-1" style={{ maxHeight: "calc(100vh - 330px)" }}>
+              {checkoutStep === 3 ? (
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white text-black">
+                    <Check className="h-7 w-7" />
+                  </div>
+                  <div className="text-xl font-semibold">Order placed successfully</div>
+                  <div className="mt-2 text-sm text-white/60">This is a demo confirmation screen. Connect Stripe or Shopify to make it live.</div>
+                  <Button onClick={resetCheckout} className="mt-6">Start New Order</Button>
+                </div>
+              ) : cart.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 p-8 text-center">
+                  <ShoppingBag className="mx-auto mb-3 h-8 w-8 text-white/60" />
+                  <div className="font-medium">Your cart is empty</div>
+                  <div className="mt-2 text-sm text-white/55">Add a few pieces to get started.</div>
+                </div>
+              ) : (
+                <>
+                  {cart.map((item) => (
+                    <div key={`${item.id}-${item.size}-${item.color}`} className="flex gap-4 rounded-3xl border border-white/10 bg-white/5 p-4">
+                      <img src={item.image} alt={item.name} className="h-24 w-20 rounded-2xl object-cover" />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium">{item.name}</div>
+                        <div className="mt-1 text-sm text-white/55">{item.color} • {item.size}</div>
+                        <div className="mt-2 font-semibold">{formatCAD(item.price)}</div>
+                        {checkoutStep === 1 && (
+                          <div className="mt-3 flex items-center gap-2">
+                            <button className="rounded-full border border-white/10 p-1.5 hover:bg-white/10" onClick={() => updateQuantity(item, -1)}>
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="w-6 text-center text-sm">{item.quantity}</span>
+                            <button className="rounded-full border border-white/10 p-1.5 hover:bg-white/10" onClick={() => updateQuantity(item, 1)}>
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {checkoutStep === 1 && (
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                      <div className="mb-3 text-sm font-medium">Promo code</div>
+                      <div className="flex gap-2">
+                        <Input value={promoCode} onChange={(e) => setPromoCode(e.target.value)} placeholder="Enter code" />
+                        <Button onClick={applyPromo}>Apply</Button>
+                      </div>
+                      {promoMessage && <div className="mt-3 text-xs text-white/60">{promoMessage}</div>}
+                      <div className="mt-3 text-xs text-white/40">Try NOIR10 or FIRST15</div>
+                    </div>
+                  )}
+
+                  {checkoutStep === 2 && (
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                      <div className="mb-3 text-sm font-medium">Checkout details</div>
+                      <div className="space-y-3">
+                        <Input placeholder="Email address" />
+                        <Input placeholder="Full name" />
+                        <Input placeholder="Shipping address" />
+                        <div className="grid grid-cols-2 gap-3">
+                          <Input placeholder="City" />
+                          <Input placeholder="Postal code" />
+                        </div>
+                        <Input placeholder="Card ending in 4242" />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-neutral-950 p-5">
+              {checkoutStep < 3 && (
+                <div className="space-y-2 text-sm text-white/65">
+                  <div className="flex items-center justify-between"><span>Subtotal</span><span>{formatCAD(subtotal)}</span></div>
+                  {discount > 0 && <div className="flex items-center justify-between"><span>Discount</span><span>-{formatCAD(discount)}</span></div>}
+                  <div className="flex items-center justify-between"><span>Shipping</span><span>{shipping === 0 ? "Free" : formatCAD(shipping)}</span></div>
+                  <div className="flex items-center justify-between border-t border-white/10 pt-3 text-base font-semibold text-white"><span>Total</span><span>{formatCAD(total)}</span></div>
+                </div>
+              )}
+
+              {checkoutStep === 1 && <Button disabled={cart.length === 0} onClick={proceedCheckout} className="mt-4 h-12 w-full">Continue to Checkout</Button>}
+              {checkoutStep === 2 && <Button disabled={cart.length === 0} onClick={proceedCheckout} className="mt-4 h-12 w-full">Place Order</Button>}
+              <p className="mt-3 text-center text-xs text-white/40">Demo checkout flow — connect Stripe or Shopify for live payments.</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
